@@ -1,0 +1,74 @@
+#include<bits/stdc++.h>
+#define ls u<<1
+#define rs u<<1|1
+#define N 2005
+using namespace std;
+
+int n;
+int x11,x22,y11,y22;
+
+struct line{
+	int x1,x2,y;
+	int tag;
+	bool operator<(line &t){return y<t.y;}
+}L[N];
+
+struct tree{
+	int l,r;
+	int cnt,len;
+}tr[N*8];
+
+int x[N];
+
+void build(int u,int l,int r){
+	tr[u]={l,r,0,0};
+	if(l==r) return;
+	int mid=(l+r)>>1;
+	build(ls,l,mid);
+	build(rs,mid+1,r);
+}
+
+void pushup(int u){
+	int l=tr[u].l,r=tr[u].r;
+	if(tr[u].cnt) tr[u].len=x[r+1]-x[l];
+	else tr[u].len=tr[ls].len+tr[rs].len;
+}
+
+void modify(int u,int l,int r,int tag){
+	if(l>tr[u].r||r<tr[u].l) return;
+	if(l<=tr[u].l&&tr[u].r<=r){
+		tr[u].cnt+=tag;
+		pushup(u);
+		return;
+	}
+	modify(ls,l,r,tag);
+	modify(rs,l,r,tag);
+	pushup(u);
+}
+
+int main()
+{
+	cin>>n;
+	for(int i=1;i<=n;++i){
+		cin>>x11>>y11>>x22>>y22;
+		L[i]={x11,x22,y11,1};
+		L[n+i]={x11,x22,y22,-1};
+		x[i]=x11;
+		x[n+i]=x22;
+	}
+	n*=2;
+	sort(L+1,L+1+n);
+	sort(x+1,x+1+n);
+	int s=unique(x+1,x+1+n)-x-1;
+	build(1,1,s-1);
+	
+	long long ans=0;
+	for(int i=1;i<n;++i){
+		int l=lower_bound(x+1,x+s+1,L[i].x1)-x;
+		int r=lower_bound(x+1,x+s+1,L[i].x2)-x;
+		modify(1,l,r-1,L[i].tag);
+		ans+=1ll*tr[1].len*(L[i+1].y-L[i].y);
+	}
+	cout<<ans;
+	return 0;
+}
